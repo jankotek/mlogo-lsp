@@ -35,23 +35,11 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-launcher-application</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-    </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-junit5</artifactId>
-      <scope>test</scope>
+      <groupId>org.eclipse.lsp4j</groupId>
+      <artifactId>org.eclipse.lsp4j</artifactId>
+      <version>0.24.0</version>
     </dependency>
 
 
@@ -78,7 +66,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass> net.kotek.logo.lsp.LSPMain</mainClass>
+              <mainClass>net.kotek.logo.lsp.LSPMain</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

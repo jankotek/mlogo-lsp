@@ -159,7 +159,7 @@ public class MLogo {
 		}
 	}
 
-	private static String loadFile(String filename) {
+	public static String loadFile(String filename) {
 		try {
 			Scanner in = new Scanner(new File(filename));
 			StringBuilder ret = new StringBuilder();

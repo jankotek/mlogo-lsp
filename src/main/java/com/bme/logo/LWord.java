@@ -1,5 +1,10 @@
 package com.bme.logo;
 
+import net.kotek.logo.lsp.LSPMain;
+import org.eclipse.lsp4j.Position;
+
+import java.io.PrintStream;
+
 /**
 * LWords are a wrapper value type representing Logo words.
 * Words can generally be thought of as symbol-like atoms, but
@@ -12,6 +17,9 @@ package com.bme.logo;
 public class LWord implements LAtom, Comparable<LWord> {
 	static final LWord trueSymbol  = new LWord(Type.Name, "true");
 	static final LWord falseSymbol = new LWord(Type.Name, "false");
+
+	public final Position posStart;
+	public final Position posEnd;
 
 	/**
 	* The context in which an LWord should be interpreted.
@@ -35,8 +43,14 @@ public class LWord implements LAtom, Comparable<LWord> {
 	* @param value the String name of the new LWord.
 	**/
 	public LWord(Type type, String value) {
+		this(type, null, value, null);
+	}
+
+	public LWord(Type type, Position posStart, String value, Position posEnd) {
 		this.type  = type;
 		this.value = value;
+		this.posStart = posStart;
+		this.posEnd = posEnd;
 	}
 
 	public void eval(Environment e) {

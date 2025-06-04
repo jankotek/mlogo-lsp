@@ -1,4 +1,6 @@
 package com.bme.logo;
+import org.eclipse.lsp4j.Position;
+
 import static com.bme.logo.SyntaxError.Type.*;
 
 import java.util.*;
@@ -54,9 +56,9 @@ public class Parser {
 
 	private static LAtom parseToken(Cursor c) {
 		if (c.match("["))   { return parseList(c); }
-		if (c.starts('\'')) { c.skip(); return new LWord(LWord.Type.Name,  c.token()); }
-		if (c.starts(':' )) { c.skip(); return new LWord(LWord.Type.Value, c.token()); }
-		if (c.tokenChar())  {           return new LWord(LWord.Type.Call,  c.token()); }
+		if (c.starts('\'')) { c.skip(); return new LWord(LWord.Type.Name, c.getCurrPos(), c.token(), c.getEndPos()); }
+		if (c.starts(':' )) { c.skip(); return new LWord(LWord.Type.Value, c.getCurrPos(), c.token(), c.getEndPos()); }
+		if (c.tokenChar())  {           return new LWord(LWord.Type.Call,  c.getCurrPos(), c.token(), c.getEndPos()); }
 		if (c.signed())     { return new LNumber(c.number()); }
 		throw new SyntaxError(c, InvalidCharacter, ""+c.curr());
 	}
@@ -76,9 +78,12 @@ public class Parser {
 			int endindex = -1;
 			String basetext = c.text;
 			StringBuilder wordname = new StringBuilder();
+			Position startPosWordname = c.getCurrPos();
 			if (!c.tokenChar()) { throw new SyntaxError(c, MissingName, null); }
 			while(c.tokenChar()) { wordname.append(c.curr()); c.skip(); }
-			LWord word = new LWord(LWord.Type.Name, wordname.toString());
+			Position endPosWordname = c.getEndPos();
+
+			LWord word = new LWord(LWord.Type.Name, startPosWordname, wordname.toString(), endPosWordname);
 
 			LList args = new LList();
 			while(true) {
@@ -91,11 +96,13 @@ public class Parser {
 				}
 				c.skip();
 				StringBuilder name = new StringBuilder();
+				Position startPos = c.getCurrPos();
 				while(c.tokenChar()) {
 					name.append(c.curr());
 					c.skip();
 				}
-				args = args.lput(new LWord(LWord.Type.Name, name.toString()));
+				Position endPos = c.getEndPos();
+				args = args.lput(new LWord(LWord.Type.Name, startPos, name.toString(), endPos));
 			}
 			c.trim();
 
@@ -227,13 +234,37 @@ class Cursor {
 	String originalText;
 	String text;
 
+	int posLine=0;
+	int posChar=0;
+	int posEndLine, posEndChar;
+
 	Cursor(String s) {
 		this.originalText = s;
 		this.text = s;
 		trim();
 	}
+	void skip(){
+		skip(false);
+	}
+	void skip(boolean trim)            {
+		//handle position, count lines etc
+		char c = originalText.charAt(index);
 
-	void skip()            { text = text.substring(1); index++; }
+		if(!trim) {
+			posEndChar = posChar;
+			posEndLine = posLine;
+		}
+		if(c=='\n'){
+			//new line
+			posLine++;
+			posChar=0;
+		}else{
+			posChar++;
+		}
+
+		text = text.substring(1);  //TODO too many copies?
+		index++;
+	}
 	char curr()            { return text.charAt(0); }
 	boolean eof()          { return text.length() < 1; }
 	boolean white()        { return !eof() && Character.isWhitespace(curr()); }
@@ -247,10 +278,10 @@ class Cursor {
 	}
 
 	void trim() {
-		while(white()) { skip(); }
+		while(white()) { skip(true); }
 		while (!eof() && curr() == '#') {
-			while(!eof() && curr() != '\n') { skip(); }
-			while(white()) { skip(); }
+			while(!eof() && curr() != '\n') { skip(true); }
+			while(white()) { skip(true); }
 		}
 	}
 
@@ -289,5 +320,13 @@ class Cursor {
 		}
 		trim();
 		return negative ? -r : r;
+	}
+
+	Position getCurrPos(){
+		return new Position(posLine, posChar);
+	}
+
+	Position getEndPos(){
+		return new Position(posEndLine, posEndChar+1);
 	}
 }
