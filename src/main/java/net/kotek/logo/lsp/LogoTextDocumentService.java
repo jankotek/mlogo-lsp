@@ -142,6 +142,9 @@ public class LogoTextDocumentService  implements TextDocumentService {
 
         //we got something with the same position, traverse tree and find definition...
         String name = found.value;
+        if(name==null)
+            return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
+
         for (int i = 0; i < flat.size(); i++) {
             LAtom a = flat.item(i);
             if (!(a instanceof LWord))
