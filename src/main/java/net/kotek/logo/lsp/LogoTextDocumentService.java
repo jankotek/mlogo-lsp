@@ -6,6 +6,7 @@ import com.bme.logo.LWord;
 import com.bme.logo.Parser;
 import com.bme.mlogo.MLogo;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
 import java.io.IOException;
@@ -73,11 +74,9 @@ public class LogoTextDocumentService  implements TextDocumentService {
     }
 
     List<DocumentHighlight> parseLogoHighlight(String content) throws IOException {
-        //normalize new lines, parser only takes \n delimiters
-        content = content.lines().collect(Collectors.joining("\n"));
+        content = normaliseLines(content);
 
         LList code = Parser.parse(content);
-
         LList flat = code.flatten();
 
         List<DocumentHighlight> ret = new ArrayList<>();
@@ -96,5 +95,70 @@ public class LogoTextDocumentService  implements TextDocumentService {
 
         }
         return ret;
+    }
+
+    private static String normaliseLines(String content) {
+        //normalize new lines, parser only takes \n delimiters
+        return content.lines().collect(Collectors.joining("\n"));
+    }
+
+
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
+        String uri = params.getTextDocument().getUri();
+        String content = docContent.get(uri);
+        if (uri == null)
+            return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
+
+
+        content = normaliseLines(content);
+        LList code = Parser.parse(content);
+        LList flat = code.flatten();
+
+        LWord found = null;
+        //find atom at current position
+        int linePos = params.getPosition().getLine();
+        int charPos = params.getPosition().getCharacter();
+        for (int i = 0; i < flat.size(); i++) {
+            LAtom a = flat.item(i);
+            if (!(a instanceof LWord))
+                continue;
+            LWord lw = (LWord) a;
+            if (lw.posStart == null || lw.posEnd == null)
+                continue;
+
+            if (lw.posStart.getLine() != linePos)
+                continue;
+
+            if (lw.posStart.getCharacter() <= charPos && charPos <= lw.posEnd.getCharacter()) {
+                found = lw;
+                break;
+            }
+        }
+
+        if (found == null) {
+            return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
+        }
+
+        //we got something with the same position, traverse tree and find definition...
+        String name = found.value;
+        for (int i = 0; i < flat.size(); i++) {
+            LAtom a = flat.item(i);
+            if (!(a instanceof LWord))
+                continue;
+            LWord lw = (LWord) a;
+            if (lw.posStart == null || lw.posEnd == null)
+                continue;
+
+            if(lw.type==LWord.Type.Name && name.equals(lw.value)){
+                //found matching definition
+                Location loc = new Location();
+                loc.setUri(uri); //always in the same file
+                loc.setRange(new Range(lw.posStart, lw.posEnd));
+                return CompletableFuture.completedFuture(Either.forLeft(List.of(loc)));
+            }
+        }
+
+        return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
     }
 }
