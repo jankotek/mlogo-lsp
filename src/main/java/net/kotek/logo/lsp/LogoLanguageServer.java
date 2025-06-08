@@ -18,7 +18,7 @@ public class LogoLanguageServer implements org.eclipse.lsp4j.services.LanguageSe
     @Override
     public CompletableFuture<InitializeResult> initialize(InitializeParams initializeParams) {
         ServerCapabilities sc = new ServerCapabilities();
-//        sc.setTextDocumentSync(TextDocumentSyncKind.Full);
+        sc.setTextDocumentSync(TextDocumentSyncKind.Full);
 //        sc.setCompletionProvider(LogoCompletionProvider.PROVIDER);
 
         sc.setDefinitionProvider(true);

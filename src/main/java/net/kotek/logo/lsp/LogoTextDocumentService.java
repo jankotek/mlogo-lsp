@@ -9,15 +9,21 @@ import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
 
 public class LogoTextDocumentService  implements TextDocumentService {
 
     private final MLogo mlogo;
+
+    private final Map<String, String> docContent = new ConcurrentHashMap<String, String>();
 
     public LogoTextDocumentService(MLogo mlogo) {
         this.mlogo = mlogo;
@@ -25,42 +31,51 @@ public class LogoTextDocumentService  implements TextDocumentService {
 
     @Override
     public void didOpen(DidOpenTextDocumentParams params) {
-
+        docContent.put(params.getTextDocument().getUri(), params.getTextDocument().getText());
     }
 
     @Override
     public void didChange(DidChangeTextDocumentParams params) {
-
+        //only possible with full sync
+        //TODO incremental sync
+        String content = params.getContentChanges().getLast().getText();
+        docContent.put(params.getTextDocument().getUri(), content);
     }
 
     @Override
     public void didClose(DidCloseTextDocumentParams params) {
-
+        docContent.remove(params.getTextDocument().getUri());
     }
 
     @Override
     public void didSave(DidSaveTextDocumentParams params) {
-
+        docContent.put(params.getTextDocument().getUri(), params.getText());
     }
 
 
     @Override
     public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
-        String fUri = params.getTextDocument().getUri().replace("file:",""); //FIXME url
-        //TODO security check for local files only
+            String content = docContent.get(params.getTextDocument().getUri());
+            if(content == null)
+                return CompletableFuture.completedFuture(Collections.emptyList());
 
-        try {
-            List<DocumentHighlight> ret = parseLogoHighlight(fUri);
+            CompletableFuture<List<? extends DocumentHighlight>> ret = new CompletableFuture<>();
 
-            //TODO async exec...
-            return CompletableFuture.completedFuture(ret);
-        } catch (Exception e) {
-            return CompletableFuture.failedFuture(e);
-        }
+            //TODO common exec pool?
+            ForkJoinPool.commonPool().execute(() -> {
+                try{
+                    ret.complete(parseLogoHighlight(content));
+                } catch (Exception e) {
+                    ret.completeExceptionally(e);
+                }
+            });
+            return ret;
     }
 
-    List<DocumentHighlight> parseLogoHighlight(String fUri) throws IOException {
-        String content = mlogo.loadFile(fUri);
+    List<DocumentHighlight> parseLogoHighlight(String content) throws IOException {
+        //normalize new lines, parser only takes \n delimiters
+        content = content.lines().collect(Collectors.joining("\n"));
+
         LList code = Parser.parse(content);
 
         LList flat = code.flatten();

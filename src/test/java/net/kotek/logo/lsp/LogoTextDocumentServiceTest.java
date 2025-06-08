@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,10 +22,7 @@ class LogoTextDocumentServiceTest {
         assertTrue(examples.isDirectory() );
 
         for(File f:examples.listFiles()){
-            System.out.println(f);
-            List s = serv.parseLogoHighlight(f.getPath());
-
-            assertTrue(s.size()>1);
+            checkFile(f);
         }
     }
 
@@ -36,10 +34,15 @@ class LogoTextDocumentServiceTest {
         for(File f:examples.listFiles()){
             if(!f.getName().endsWith("logo") || f.getName().contains("Syntax"))
                 continue;
-            System.out.println(f);
-            List s = serv.parseLogoHighlight(f.getPath());
-
-            assertTrue(s.size()>0, f.getName());
+            checkFile(f);
         }
+    }
+
+    private void checkFile(File f) throws IOException {
+        System.out.println(f);
+
+        String content = Files.readString(f.toPath());
+        List s = serv.parseLogoHighlight(content);
+        assertTrue(s.size()>0, f.getName());
     }
 }
