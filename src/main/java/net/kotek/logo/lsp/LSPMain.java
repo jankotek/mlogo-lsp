@@ -14,16 +14,25 @@ import java.util.logging.Logger;
 /** main class to start Logo LSP server */
 public class LSPMain {
 
-    public static OutputStream outs;
+    public static OutputStream outs = System.out;
     private static final Logger LOGGER = Logger.getLogger(LSPMain.class.getName());
     public static void main(String[] args) throws InterruptedException {
 
+        InputStream ins = System.in;
 
-        // add some crude debugging
-        File fout = new File("/home/jan/logs/out" + System.currentTimeMillis() + ".txt");
-        File fins = new File("/home/jan/logs/ins" + System.currentTimeMillis() + ".txt");
-        InputStream ins = new DebugInputStream(System.in, fins);
-        outs =new DebugOutputStream(System.out, fout);
+        if(args!=null && args.length==1) {
+            String f = args[0];
+            File ff = new File(f);
+            if(!ff.exists() || !ff.isDirectory()){
+                System.err.println("Debug dir error");
+                System.exit(-1);
+            }
+            // add some crude debugging
+            File fout = new File(f+"/out" + System.currentTimeMillis() + ".txt");
+            File fins = new File(f+"/ins" + System.currentTimeMillis() + ".txt");
+            ins = new DebugInputStream(System.in, fins);
+            outs = new DebugOutputStream(System.out, fout);
+        }
 
         LanguageServer server = new LogoLanguageServer() ;
         Launcher<LanguageClient> launcher =
