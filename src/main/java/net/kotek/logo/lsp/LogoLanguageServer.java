@@ -1,5 +1,6 @@
 package net.kotek.logo.lsp;
 
+import com.bme.mlogo.MLogo;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageClientAware;
@@ -10,7 +11,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class LogoLanguageServer implements org.eclipse.lsp4j.services.LanguageServer, LanguageClientAware {
 
-    private final TextDocumentService textDocumentService = new LogoTextDocumentService(this);
+    private final MLogo mlogo = new MLogo();
+    private final TextDocumentService textDocumentService = new LogoTextDocumentService(mlogo);
     private final WorkspaceService workspaceService = new LogoWorkspaceService(this);
 
     @Override

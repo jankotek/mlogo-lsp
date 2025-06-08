@@ -8,12 +8,17 @@ import static com.bme.logo.Primitives.*;
 public class MLogo {
 	static final String version = "MLogo 0.1";
 
-	//TODO make this class non static
-	static PrintStream out = System.out;
+	PrintStream out = System.out;
 
-	private static boolean callSystemExit = false;
+	private boolean callSystemExit = false;
 
 	public static void main(String[] a) {
+		MLogo mlogo = new MLogo();
+		mlogo.callSystemExit=true;
+		mlogo.main2(a);
+	}
+
+	public void main2(String[] a) {
 		List<String> args = new ArrayList<String>(Arrays.asList(a));
 		callSystemExit = true;
 
@@ -64,7 +69,7 @@ public class MLogo {
 		}
 	}
 
-	private static void repl(Environment env, TurtleGraphics t) {
+	private void repl(Environment env, TurtleGraphics t) {
 		out.println(version);
 		out.println("type 'exit' to quit.");
 		out.println();
@@ -95,7 +100,7 @@ public class MLogo {
 			System.exit(0);
 	}
 
-	private static void runString(Environment env, String sourceText, TurtleGraphics t) {
+	private void runString(Environment env, String sourceText, TurtleGraphics t) {
 		try {
 			LList code = Parser.parse(sourceText);
 			Interpreter.init(code, env);
@@ -120,7 +125,7 @@ public class MLogo {
 		}
 	}
 
-	static void runFile(Environment env, String filename, TurtleGraphics t) {
+	void runFile(Environment env, String filename, TurtleGraphics t) {
 		try {
 			LList code = Parser.parse(loadFile(filename));
 			if (t == null) {
@@ -159,7 +164,7 @@ public class MLogo {
 		}
 	}
 
-	public static String loadFile(String filename) {
+	public String loadFile(String filename) {
 		try {
 			Scanner in = new Scanner(new File(filename));
 			StringBuilder ret = new StringBuilder();
@@ -176,11 +181,11 @@ public class MLogo {
 			out.format("Unable to load file '%s'.%n", filename);
 			if(callSystemExit)
 				System.exit(1);
-			return null;
+			throw new IOError(e);
 		}
 	}
 
-	static void primitiveIO(Environment e, boolean trace) {
+	void primitiveIO(Environment e, boolean trace) {
 		final LWord a = new LWord(LWord.Type.Name, "argument1");
 		final Scanner in = new Scanner(System.in);
 

@@ -28,14 +28,14 @@ public class MLogoTest {
 
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            MLogo.out = new PrintStream(out);
+            MLogo mlogo = new MLogo();
+            mlogo.out = new PrintStream(out);
 
             Environment e = Primitives.kernel();
-            MLogo.primitiveIO(e, false);
+            mlogo.primitiveIO(e, false);
 
 //            TurtleGraphics t = new TurtleGraphics(e);
-            MLogo.runFile(e, outF.getPath(), null);
-            MLogo.out.close();
+            mlogo.runFile(e, outF.getPath(), null);
 
             //TODO catch failed exit code?!
 
@@ -46,9 +46,5 @@ public class MLogoTest {
 
         }
 
-    }
-    @AfterEach
-    public void cleanup(){
-        MLogo.out = System.out;
     }
 }

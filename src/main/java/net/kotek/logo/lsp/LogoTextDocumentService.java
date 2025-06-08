@@ -16,7 +16,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class LogoTextDocumentService  implements TextDocumentService {
-    public LogoTextDocumentService(LogoLanguageServer logoLanguageServer) {
+
+    private final MLogo mlogo;
+
+    public LogoTextDocumentService(MLogo mlogo) {
+        this.mlogo = mlogo;
     }
 
     @Override
@@ -55,8 +59,8 @@ public class LogoTextDocumentService  implements TextDocumentService {
         }
     }
 
-    static List<DocumentHighlight> parseLogoHighlight(String fUri) throws IOException {
-        String content = MLogo.loadFile(fUri);
+    List<DocumentHighlight> parseLogoHighlight(String fUri) throws IOException {
+        String content = mlogo.loadFile(fUri);
         LList code = Parser.parse(content);
 
         LList flat = code.flatten();
