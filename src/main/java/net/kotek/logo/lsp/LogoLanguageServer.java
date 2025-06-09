@@ -55,6 +55,6 @@ public class LogoLanguageServer implements org.eclipse.lsp4j.services.LanguageSe
 
     @Override
     public void connect(LanguageClient client) {
-        client.showMessage(new MessageParams(MessageType.Info,"connected and started"));
+        //TODO client aware
     }
 }
