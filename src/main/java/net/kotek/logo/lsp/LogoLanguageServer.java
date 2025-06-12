@@ -23,6 +23,7 @@ public class LogoLanguageServer implements org.eclipse.lsp4j.services.LanguageSe
 
         sc.setDefinitionProvider(true);
         sc.setDocumentHighlightProvider(true);
+        sc.setDocumentSymbolProvider(true);
 
         ServerInfo si = new ServerInfo();
         si.setName("LogoLSP");
@@ -38,6 +39,11 @@ public class LogoLanguageServer implements org.eclipse.lsp4j.services.LanguageSe
 
     @Override
     public void exit() {
+        if(LSPMain.log!=null)try{
+            LSPMain.log.close();
+            LSPMain.log = null;
+        }catch(Exception e){
+        }
         System.exit(0); //TODO system.exit
     }
 

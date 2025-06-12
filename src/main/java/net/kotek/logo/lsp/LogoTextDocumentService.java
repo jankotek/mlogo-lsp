@@ -169,4 +169,79 @@ public class LogoTextDocumentService  implements TextDocumentService {
 
         return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
     }
+
+
+
+    @Override
+    public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(DocumentSymbolParams params) {
+
+        try {
+             String uri = params.getTextDocument().getUri();
+            if (uri == null)
+                return CompletableFuture.completedFuture(Collections.emptyList());
+            if(LSPMain.log!=null)
+                LSPMain.log.println("Called symbols for"+uri);
+
+            String content = docContent.get(uri);
+            if (content == null){
+                if(LSPMain.log!=null)
+                    LSPMain.log.println("symbols content not found for"+uri);
+
+                return CompletableFuture.completedFuture(Collections.emptyList());
+            }
+
+            CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> ret = new CompletableFuture<>();
+
+            //TODO common exec pool?
+            ForkJoinPool.commonPool().execute(() -> {
+                try{
+                    ret.complete(parseDocSymbols(content));
+                } catch (Exception e) {
+                    ret.completeExceptionally(e);
+                }
+            });
+            return ret;
+
+        }catch (Exception e){
+            if(LSPMain.log!=null)
+                e.printStackTrace(LSPMain.log);
+            return CompletableFuture.completedFuture(Collections.emptyList());
+        }
+
+    }
+
+    private List<Either<SymbolInformation, DocumentSymbol>> parseDocSymbols(String content) {
+
+        content = normaliseLines(content);
+        LList code = Parser.parse(content);
+        LList flat = code.flatten();
+
+        if(LSPMain.log!=null)
+            LSPMain.log.println("symbols len "+flat.size());
+
+        List<Either<SymbolInformation, DocumentSymbol>> ret = new ArrayList<>();
+
+        for (int i = 0; i < flat.size(); i++) {
+            LAtom a = flat.item(i);
+            if (!(a instanceof LWord))
+                continue;
+            LWord lw = (LWord) a;
+            if (lw.posStart == null || lw.posEnd == null)
+                continue;
+            if (lw.type != LWord.Type.Name || !lw.isMethod)
+                continue;
+
+            if(LSPMain.log!=null)
+                LSPMain.log.println("found symbols"+lw.value);
+
+            DocumentSymbol ds = new DocumentSymbol();
+            ds.setName(lw.value);
+            ds.setRange(new Range(lw.posStart, lw.posEnd));
+            ds.setKind(SymbolKind.Method);
+            ds.setSelectionRange(new Range(lw.posStart, lw.posEnd));
+            ret.add(Either.forRight(ds));
+
+        }
+        return ret;
+    }
 }

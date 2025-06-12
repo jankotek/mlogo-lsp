@@ -56,9 +56,9 @@ public class Parser {
 
 	private static LAtom parseToken(Cursor c) {
 		if (c.match("["))   { return parseList(c); }
-		if (c.starts('\'')) { c.skip(); return new LWord(LWord.Type.Name, c.getCurrPos(), c.token(), c.getEndPos()); }
-		if (c.starts(':' )) { c.skip(); return new LWord(LWord.Type.Value, c.getCurrPos(), c.token(), c.getEndPos()); }
-		if (c.tokenChar())  {           return new LWord(LWord.Type.Call,  c.getCurrPos(), c.token(), c.getEndPos()); }
+		if (c.starts('\'')) { c.skip(); return new LWord(LWord.Type.Name, c.getCurrPos(), c.token(), c.getEndPos(), false); }
+		if (c.starts(':' )) { c.skip(); return new LWord(LWord.Type.Value, c.getCurrPos(), c.token(), c.getEndPos(), false); }
+		if (c.tokenChar())  {           return new LWord(LWord.Type.Call,  c.getCurrPos(), c.token(), c.getEndPos(), false); }
 		if (c.signed())     { return new LNumber(c.number()); }
 		throw new SyntaxError(c, InvalidCharacter, ""+c.curr());
 	}
@@ -83,7 +83,7 @@ public class Parser {
 			while(c.tokenChar()) { wordname.append(c.curr()); c.skip(); }
 			Position endPosWordname = c.getEndPos();
 
-			LWord word = new LWord(LWord.Type.Name, startPosWordname, wordname.toString(), endPosWordname);
+			LWord word = new LWord(LWord.Type.Name, startPosWordname, wordname.toString(), endPosWordname, false);
 
 			LList args = new LList();
 			while(true) {
@@ -102,7 +102,7 @@ public class Parser {
 					c.skip();
 				}
 				Position endPos = c.getEndPos();
-				args = args.lput(new LWord(LWord.Type.Name, startPos, name.toString(), endPos));
+				args = args.lput(new LWord(LWord.Type.Name, startPos, name.toString(), endPos, false));
 			}
 			c.trim();
 
