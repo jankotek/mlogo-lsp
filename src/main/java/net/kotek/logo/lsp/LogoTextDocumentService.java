@@ -56,11 +56,14 @@ public class LogoTextDocumentService  implements TextDocumentService {
 
     @Override
     public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams params) {
-            String content = docContent.get(params.getTextDocument().getUri());
-            if(content == null)
-                return CompletableFuture.completedFuture(Collections.emptyList());
+        String uri = params.getTextDocument().getUri();
+        if (uri == null)
+            return CompletableFuture.completedFuture(Collections.emptyList());
+        String content = docContent.get(uri);
+        if (content == null)
+            return CompletableFuture.completedFuture(Collections.emptyList());
 
-            CompletableFuture<List<? extends DocumentHighlight>> ret = new CompletableFuture<>();
+        CompletableFuture<List<? extends DocumentHighlight>> ret = new CompletableFuture<>();
 
             //TODO common exec pool?
             ForkJoinPool.commonPool().execute(() -> {
@@ -106,8 +109,10 @@ public class LogoTextDocumentService  implements TextDocumentService {
     @Override
     public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> definition(DefinitionParams params) {
         String uri = params.getTextDocument().getUri();
-        String content = docContent.get(uri);
         if (uri == null)
+            return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
+        String content = docContent.get(uri);
+        if (content == null)
             return CompletableFuture.completedFuture(Either.forLeft(Collections.emptyList()));
 
 
